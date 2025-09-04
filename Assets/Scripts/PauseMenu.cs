@@ -1,6 +1,7 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
+using System.Collections;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -11,147 +12,165 @@ public class PauseMenu : MonoBehaviour
     public Slider volumeSlider;
 
     [Header("Audio")]
-    public AudioMixer audioMixer; // Opcional: para mejor control de audio
+    public AudioMixer audioMixer;
 
     private bool isPaused = false;
-    private float currentVolume;
+    private bool isQuitting = false;
 
     void Start()
     {
-        // Asegurarse de que el menú esté desactivado al inicio
-        pauseMenuUI.SetActive(false);
+        if (pauseMenuUI != null)
+            pauseMenuUI.SetActive(false);
 
-        // Ocultar cursor al inicio del juego
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
 
-        // Configurar botones
-        resumeButton.onClick.AddListener(ResumeGame);
-        quitButton.onClick.AddListener(QuitGame);
+        ConfigurarBotones();
+        ConfigurarVolumen();
+    }
 
-        // Configurar slider de volumen
-        SetupVolumeSlider();
+    void ConfigurarBotones()
+    {
+        // Resume button setup
+        if (resumeButton != null)
+        {
+            resumeButton.onClick.RemoveAllListeners();
+            resumeButton.onClick.AddListener(ResumeGame);
+        }
+
+        // Quit button setup
+        if (quitButton != null)
+        {
+            quitButton.onClick.RemoveAllListeners();
+            quitButton.onClick.AddListener(QuitGame);
+
+            // Disable raycast on all child elements
+            DesactivarTodosLosRaycast(quitButton.transform);
+
+            // Create clickable area to ensure functionality
+            CrearAreaClickeable();
+        }
+    }
+
+    void DesactivarTodosLosRaycast(Transform parent)
+    {
+        Graphic[] graphics = parent.GetComponentsInChildren<Graphic>();
+        foreach (Graphic graphic in graphics)
+        {
+            if (graphic.gameObject != quitButton.gameObject)
+            {
+                graphic.raycastTarget = false;
+            }
+        }
+    }
+
+    void CrearAreaClickeable()
+    {
+        GameObject clickArea = new GameObject("QuitClickArea");
+        clickArea.transform.SetParent(quitButton.transform, false);
+
+        RectTransform rectTransform = clickArea.AddComponent<RectTransform>();
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.sizeDelta = Vector2.zero;
+        rectTransform.anchoredPosition = Vector2.zero;
+
+        Image invisibleImage = clickArea.AddComponent<Image>();
+        invisibleImage.color = new Color(0, 0, 0, 0.01f);
+        invisibleImage.raycastTarget = true;
+
+        Button invisibleButton = clickArea.AddComponent<Button>();
+        invisibleButton.targetGraphic = invisibleImage;
+        invisibleButton.onClick.AddListener(QuitGame);
+    }
+
+    void ConfigurarVolumen()
+    {
+        if (volumeSlider != null)
+        {
+            volumeSlider.onValueChanged.RemoveAllListeners();
+            volumeSlider.value = AudioListener.volume;
+            volumeSlider.onValueChanged.AddListener(ChangeVolume);
+        }
     }
 
     void Update()
     {
-        // Detectar presión de la tecla Escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (isPaused)
-            {
                 ResumeGame();
-            }
             else
-            {
                 PauseGame();
-            }
         }
-    }
-
-    void SetupVolumeSlider()
-    {
-        // Obtener volumen actual
-        if (audioMixer != null)
-        {
-            audioMixer.GetFloat("MasterVolume", out currentVolume);
-            volumeSlider.value = Mathf.Pow(10, currentVolume / 20);
-        }
-        else
-        {
-            currentVolume = AudioListener.volume;
-            volumeSlider.value = currentVolume;
-        }
-
-        // Configurar rango del slider
-        volumeSlider.minValue = 0f;
-        volumeSlider.maxValue = 1f;
-
-        // Agregar listener para cambios de volumen
-        volumeSlider.onValueChanged.AddListener(ChangeVolume);
     }
 
     public void PauseGame()
     {
-        pauseMenuUI.SetActive(true);
-        Time.timeScale = 0f; // Pausar el tiempo del juego
-        isPaused = true;
+        if (isQuitting) return;
 
-        // Mostrar y liberar el cursor
+        pauseMenuUI.SetActive(true);
+        Time.timeScale = 0f;
+        isPaused = true;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
-
-        // NO pausar el audio - la música seguirá sonando
-        // AudioListener.pause = true; <- Esta línea se elimina
     }
 
     public void ResumeGame()
     {
-        pauseMenuUI.SetActive(false);
-        Time.timeScale = 1f; // Reanudar el tiempo del juego
-        isPaused = false;
+        if (isQuitting) return;
 
-        // Ocultar y bloquear el cursor
+        pauseMenuUI.SetActive(false);
+        Time.timeScale = 1f;
+        isPaused = false;
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-
-        // NO reanudar audio porque nunca se pausó
-        // AudioListener.pause = false; <- Esta línea se elimina
     }
 
     public void ChangeVolume(float volume)
     {
-        if (audioMixer != null)
-        {
-            // Convertir a decibelios para AudioMixer
-            float dbValue = volume > 0 ? Mathf.Log10(volume) * 20 : -80f;
-            audioMixer.SetFloat("MasterVolume", dbValue);
-        }
-        else
-        {
-            // Usar AudioListener si no hay AudioMixer
-            AudioListener.volume = volume;
-        }
+        if (isQuitting) return;
 
-        // Guardar configuración
+        AudioListener.volume = volume;
         PlayerPrefs.SetFloat("GameVolume", volume);
-        PlayerPrefs.Save();
-
-        // NO cerrar el menú cuando se mueve el slider
-        // El menú permanece abierto
     }
 
     public void QuitGame()
     {
-        // Guardar configuración antes de salir
+        if (isQuitting) return;
+        isQuitting = true;
+
+        Time.timeScale = 1f;
+        AudioListener.pause = false;
         PlayerPrefs.Save();
 
+        StartCoroutine(QuitCoroutine());
+    }
+
+    private IEnumerator QuitCoroutine()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+
 #if UNITY_EDITOR
-        // Si estamos en el editor de Unity
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-            // Si estamos en una build
-            Application.Quit();
+        Application.Quit();
 #endif
     }
 
     void OnApplicationPause(bool pauseStatus)
     {
-        // Pausar automáticamente si la aplicación pierde el foco
         if (pauseStatus && !isPaused)
         {
             PauseGame();
         }
-        // NO despausar automáticamente
     }
 
     void OnApplicationFocus(bool hasFocus)
     {
-        // Manejar cuando la aplicación pierde foco
         if (!hasFocus && !isPaused)
         {
             PauseGame();
         }
-        // NO despausar automáticamente cuando gana foco
     }
 }

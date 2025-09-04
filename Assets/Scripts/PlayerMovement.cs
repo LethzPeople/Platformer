@@ -2,14 +2,14 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    // Componentes
+    // Components
     private Rigidbody2D rb;
     private Animator animator;
-    private SpriteRenderer spriteRenderer; // Nuevo componente para girar el sprite
+    private SpriteRenderer spriteRenderer; // New component to flip the sprite
     private bool isGrounded;
     private bool isChargingJump;
 
-    // Configuración de movimiento
+    // Movement configuration
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] private float minJumpForce = 5f;
     [SerializeField] private float maxJumpForce = 15f;
@@ -20,7 +20,7 @@ public class PlayerMovement : MonoBehaviour
     private float horizontalDirection;
     private Vector2 jumpDirection;
 
-    // Configuración de gravedad
+    // Gravity configuration
     [SerializeField] private float gravityScale = 1f;
     [SerializeField] private float fastFallGravityMult = 2f;
     [SerializeField] private float jumpCutGravityMult = 1.5f;
@@ -28,7 +28,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float maxFastFallSpeed = -10f;
     [SerializeField] private float maxFallSpeed = -7f;
 
-    // Verificación de suelo
+    // Ground check
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private Transform groundCheck;
 
@@ -36,7 +36,7 @@ public class PlayerMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>(); // Inicializa el SpriteRenderer
+        spriteRenderer = GetComponent<SpriteRenderer>(); // Initialize SpriteRenderer
         jumpDirection = Vector2.up;
         rb.gravityScale = gravityScale;
     }
@@ -50,14 +50,14 @@ public class PlayerMovement : MonoBehaviour
         {
             horizontalDirection = Input.GetAxisRaw("Horizontal");
 
-            // Suaviza el movimiento horizontal
+            // Smooth horizontal movement
             float targetSpeed = horizontalDirection * moveSpeed;
             rb.velocity = new Vector2(Mathf.Lerp(rb.velocity.x, targetSpeed, 0.1f), rb.velocity.y);
 
-            // Voltea el sprite hacia la dirección de movimiento
+            // Flip sprite towards movement direction
             if (horizontalDirection != 0)
             {
-                spriteRenderer.flipX = horizontalDirection < 0; // Gira hacia la izquierda o derecha
+                spriteRenderer.flipX = horizontalDirection < 0; // Turn left or right
             }
         }
 
@@ -146,5 +146,4 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 }
-
 
