@@ -31,8 +31,13 @@ This is a small 2D platformer game developed in Unity. It's my first experience 
 1. Clone this repository
 2. Open the project in Unity 2022.3.50f1 or higher
 
-## Game Only
+## 🎮 Game Only
 
+[DOWLOAD](https://drive.google.com/file/d/14TVQshC2sx3kCt2X7CnPI9vT7eMnSS7h/view?usp=sharing)
+
+## 🎮 Gameplay Video
+
+[![Video Title](https://img.youtube.com/vi/rGtSPIhGqnQ/0.jpg)](https://www.youtube.com/watch?v=rGtSPIhGqnQ)
 
 
 ## 🚀 Final Project
