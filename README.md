@@ -33,7 +33,7 @@ This is a small 2D platformer game developed in Unity. It's my first experience 
 
 ## 🎮 Game Only
 
-[DOWLOAD](https://drive.google.com/file/d/14TVQshC2sx3kCt2X7CnPI9vT7eMnSS7h/view?usp=sharing)
+[DOWNLOAD](https://drive.google.com/file/d/14TVQshC2sx3kCt2X7CnPI9vT7eMnSS7h/view?usp=sharing)
 
 ## 🎮 Gameplay Video
 
